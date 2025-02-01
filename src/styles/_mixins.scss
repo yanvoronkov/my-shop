@@ -1,0 +1,23 @@
+@mixin flexCenter() {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+@mixin shoppingCardInfoColor() {
+	color: #575757;
+	font-size: 22px;
+	font-weight: 400;
+	margin-bottom: 6px;
+}
+
+@mixin main-btn() {
+	display: block;
+	padding: 15px 57px 14px;
+	font-size: 16px;
+	font-weight: 400;
+	border: solid;
+	border-width: 1px;
+	background: none;
+	margin-bottom: 60px;
+}
