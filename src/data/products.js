@@ -99,7 +99,7 @@ const products = [
 		sizes: ["L", "XS"],
 	},
 	{
-		cat_id: 12,
+		id: 12,
 		cat_image: "/assets/images/fetured_items/product6.jpeg",
 		card_image: "/assets/images/fetured_items/product6.jpeg",
 		title: "ELLERY X M'O CAPSULE",
