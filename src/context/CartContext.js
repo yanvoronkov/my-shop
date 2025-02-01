@@ -1,79 +1,85 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from 'react';
 
-// Создаем контекст корзины
 export const CartContext = createContext();
 
-// Создаем провайдер для корзины
 export const CartProvider = ({ children }) => {
-	const [cart, setCart] = useState([]);
-	const [isModalOpen, setIsModalOpen] = useState(false); // Состояние модального окна
-	const [productToDelete, setProductToDelete] = useState(null); // Товар, который нужно удалить
+	const [cart, setCart] = useState(() => {
+		try {
+			const storedCart = localStorage.getItem('cart');
+			return storedCart ? JSON.parse(storedCart) : {};
+		} catch (error) {
+			console.error("Error reading cart from localStorage", error);
+			return {};
+		}
+	});
 
-	// Функция для добавления товара в корзину
+	useEffect(() => {
+		try {
+			localStorage.setItem('cart', JSON.stringify(cart));
+		} catch (error) {
+			console.error("Error saving cart to localStorage", error);
+		}
+	}, [cart]);
+
+
 	const addToCart = (product) => {
-		const existingItem = cart.find((item) => item.id === product.id);
-		if (existingItem) {
-			setCart(
-				cart.map((item) =>
-					item.id === product.id
-						? { ...item, quantity: item.quantity + 1 }
-						: item
-				)
-			);
-		} else {
-			setCart([...cart, { ...product, quantity: 1 }]);
-		}
+		setCart(prevCart => {
+			const updatedCart = { ...prevCart };
+			if (updatedCart[product.id]) {
+				updatedCart[product.id].quantity += 1;
+			} else {
+				updatedCart[product.id] = { ...product, quantity: 1 };
+			}
+			return updatedCart;
+		});
 	};
 
-	// Функция для уменьшения количества товара
-	const decreaseQuantity = (productId) => {
-		const updatedCart = cart
-			.map((item) =>
-				item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
-			)
-			.filter((item) => item.quantity > 0);
-
-		if (updatedCart.length < cart.length) {
-			// Если товар удален (количество стало 0), показываем модальное окно
-			setProductToDelete(productId);
-			setIsModalOpen(true);
-		}
-
-		setCart(updatedCart);
-	};
-
-	// Функция для удаления товара из корзины
 	const removeFromCart = (productId) => {
-		setProductToDelete(productId);
-		setIsModalOpen(true);
+		setCart(prevCart => {
+			const updatedCart = { ...prevCart };
+			if (updatedCart[productId]) {
+				delete updatedCart[productId]
+			}
+			return updatedCart;
+		});
 	};
 
-	// Подтверждение удаления товара
-	const confirmDelete = () => {
-		setCart(cart.filter((item) => item.id !== productToDelete));
-		setIsModalOpen(false);
-		setProductToDelete(null);
+
+	const updateQuantity = (productId, newQuantity) => {
+		setCart(prevCart => {
+			const updatedCart = { ...prevCart };
+			if (updatedCart[productId]) {
+				updatedCart[productId].quantity = newQuantity;
+			}
+			return updatedCart;
+		});
 	};
 
-	// Закрытие модального окна
-	const closeModal = () => {
-		setIsModalOpen(false);
-		setProductToDelete(null);
+	const clearCart = () => {
+		setCart({});
 	};
 
-	// Возвращаем провайдер с состоянием корзины и функциями
+
+	const getTotalQuantity = () => {
+		return Object.values(cart).reduce((total, item) => total + item.quantity, 0);
+	};
+
+	const getTotalPrice = () => {
+		return Object.values(cart).reduce((total, item) => total + (item.price * item.quantity), 0);
+	};
+
+	const cartValue = {
+		cart,
+		addToCart,
+		removeFromCart,
+		updateQuantity,
+		clearCart,
+		getTotalQuantity,
+		getTotalPrice
+	};
+
 	return (
-		<CartContext.Provider
-			value={{
-				cart,
-				addToCart,
-				decreaseQuantity,
-				removeFromCart,
-				isModalOpen,
-				confirmDelete,
-				closeModal,
-			}}
-		>
+		<CartContext.Provider value={cartValue}>
 			{children}
 		</CartContext.Provider>
 	);
