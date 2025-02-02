@@ -1,26 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { CartContext } from '../context/CartContext';
 
 const ProductList = ({ products, selectedSizes }) => {
-	const [visibleCount, setVisibleCount] = useState(6); // Состояние для отслеживания количества видимых товаров
-	const navigate = useNavigate(); // Хук для навигации
-
-	// Если есть выбранные размеры, фильтруем товары
+	const [visibleCount, setVisibleCount] = useState(6);
+	const navigate = useNavigate();
+	const { addToCart } = useContext(CartContext);
+	const [addedProductId, setAddedProductId] = useState(null);
 	const filteredProducts = selectedSizes.length > 0
 		? products.filter(product =>
 			product.sizes.some(size => selectedSizes.includes(size))
 		)
-		: products; // Если фильтры не выбраны, показываем все товары
+		: products;
 
 	const loadMoreProducts = () => {
-		setVisibleCount((prevCount) => prevCount + 6); // Увеличиваем количество видимых товаров на 6
+		setVisibleCount((prevCount) => prevCount + 6);
 	};
 
 	const handleProductClick = (id) => {
-		navigate(`/catalogue/${id}`); // Перенаправляем на страницу товара
+		navigate(`/catalogue/${id}`);
 	};
 
+	const handleAddToCart = (product) => {
+		setAddedProductId(product.id);
+		addToCart(product);
+		setTimeout(() => setAddedProductId(null), 300);
+	};
 
 	return (
 		<section className="fetured_items center">
@@ -28,7 +33,7 @@ const ProductList = ({ products, selectedSizes }) => {
 
 				{filteredProducts.length > 0 ? (
 					filteredProducts
-						.slice(0, visibleCount) // Показываем только видимые товары
+						.slice(0, visibleCount)
 						.map(product => (
 							<div key={product.id} className="item-fetured__item">
 								<img
@@ -41,10 +46,10 @@ const ProductList = ({ products, selectedSizes }) => {
 									<h2 className="item-fetured__title">{product.title}</h2>
 									<p className="item-fetured__text">{product.description}</p>
 									<div className="item-fetured__price-btn">
-										<p className="item-fetured__price">{product.price}</p>
+										<p className="item-fetured__price">${product.price}</p>
 										<button
-											onClick={() => handleProductClick(product.id)}
-											className="item-fetured__btn"
+											onClick={() => handleAddToCart(product)}
+											className={`item-fetured__btn ${addedProductId === product.id ? 'adding' : ''}`}
 										>
 											Add to Cart
 										</button>
@@ -58,7 +63,6 @@ const ProductList = ({ products, selectedSizes }) => {
 
 			</div>
 
-			{/* Кнопка отображается только если есть еще товары */}
 			{visibleCount < filteredProducts.length && (
 				<button
 					className="fetured_items__btn"

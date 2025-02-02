@@ -114,7 +114,7 @@ body {
 }
 
 /* Создаем псевдоэлемент after для иконки корзины */
-.header_right_basket::after {
+.header_right_basket__count {
 	position: absolute;
 	top: -5px;
 	right: -5px;

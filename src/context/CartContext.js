@@ -1,13 +1,29 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
 
 // Создаем контекст корзины
 export const CartContext = createContext();
 
 // Создаем провайдер для корзины
 export const CartProvider = ({ children }) => {
-	const [cart, setCart] = useState([]);
-	const [isModalOpen, setIsModalOpen] = useState(false); // Состояние модального окна
-	const [productToDelete, setProductToDelete] = useState(null); // Товар, который нужно удалить
+	const [cart, setCart] = useState(() => {
+		try {
+			const storedCart = localStorage.getItem('cart');
+			return storedCart ? JSON.parse(storedCart) : [];
+		} catch (error) {
+			console.error("Error reading cart from localStorage", error);
+			return [];
+		}
+	});
+
+
+	useEffect(() => {
+		try {
+			localStorage.setItem('cart', JSON.stringify(cart));
+		} catch (error) {
+			console.error("Error saving cart to localStorage", error);
+		}
+	}, [cart]);
+
 
 	// Функция для добавления товара в корзину
 	const addToCart = (product) => {
@@ -32,33 +48,21 @@ export const CartProvider = ({ children }) => {
 				item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
 			)
 			.filter((item) => item.quantity > 0);
-
-		if (updatedCart.length < cart.length) {
-			// Если товар удален (количество стало 0), показываем модальное окно
-			setProductToDelete(productId);
-			setIsModalOpen(true);
-		}
-
 		setCart(updatedCart);
 	};
 
 	// Функция для удаления товара из корзины
 	const removeFromCart = (productId) => {
-		setProductToDelete(productId);
-		setIsModalOpen(true);
+		setCart(cart.filter((item) => item.id !== productId));
 	};
 
-	// Подтверждение удаления товара
-	const confirmDelete = () => {
-		setCart(cart.filter((item) => item.id !== productToDelete));
-		setIsModalOpen(false);
-		setProductToDelete(null);
+
+	const getTotalQuantity = () => {
+		return cart.reduce((total, item) => total + item.quantity, 0);
 	};
 
-	// Закрытие модального окна
-	const closeModal = () => {
-		setIsModalOpen(false);
-		setProductToDelete(null);
+	const getTotalPrice = () => {
+		return cart.reduce((total, item) => total + item.price * item.quantity, 0);
 	};
 
 	// Возвращаем провайдер с состоянием корзины и функциями
@@ -69,9 +73,8 @@ export const CartProvider = ({ children }) => {
 				addToCart,
 				decreaseQuantity,
 				removeFromCart,
-				isModalOpen,
-				confirmDelete,
-				closeModal,
+				getTotalQuantity,
+				getTotalPrice,
 			}}
 		>
 			{children}

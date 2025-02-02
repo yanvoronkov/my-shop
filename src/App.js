@@ -8,28 +8,31 @@ import ProductPage from "./pages/ProductPage";
 import products from "./data/products";
 import RegistrationPage from "./pages/RegistrationPage";
 import ShoppingCart from "./pages/ShoppingCart";
+import { CartProvider } from "./context/CartContext"; // Import CartProvider
 
 
 function App() {
   return (
     <div className="App">
-      <Header />
+      <CartProvider> {/* Обёртываем всё приложение в CartProvider */}
+        <Header />
 
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/catalogue" element={<CataloguePage />} />
-          <Route path="/registration" element={<RegistrationPage />} />
-          <Route path="/shoppingcart" element={<ShoppingCart />} />
-          <Route
-            path="/catalogue/:id"
-            element={<ProductPage products={products} />}
-          />
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/catalogue" element={<CataloguePage />} />
+            <Route path="/registration" element={<RegistrationPage />} />
+            <Route path="/shoppingcart" element={<ShoppingCart />} />
+            <Route
+              path="/catalogue/:id"
+              element={<ProductPage products={products} />}
+            />
 
-        </Routes>
-      </Router>
-      <Contact />
-      <Footer />
+          </Routes>
+        </Router>
+        <Contact />
+        <Footer />
+      </CartProvider>
     </div>
   );
 }
