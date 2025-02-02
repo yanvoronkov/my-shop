@@ -1,17 +1,20 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from "react";
 
+// Создаем контекст корзины
 export const CartContext = createContext();
 
+// Создаем провайдер для корзины
 export const CartProvider = ({ children }) => {
 	const [cart, setCart] = useState(() => {
 		try {
 			const storedCart = localStorage.getItem('cart');
-			return storedCart ? JSON.parse(storedCart) : {};
+			return storedCart ? JSON.parse(storedCart) : [];
 		} catch (error) {
 			console.error("Error reading cart from localStorage", error);
-			return {};
+			return [];
 		}
 	});
+
 
 	useEffect(() => {
 		try {
@@ -22,64 +25,58 @@ export const CartProvider = ({ children }) => {
 	}, [cart]);
 
 
+	// Функция для добавления товара в корзину
 	const addToCart = (product) => {
-		setCart(prevCart => {
-			const updatedCart = { ...prevCart };
-			if (updatedCart[product.id]) {
-				updatedCart[product.id].quantity += 1;
-			} else {
-				updatedCart[product.id] = { ...product, quantity: 1 };
-			}
-			return updatedCart;
-		});
+		const existingItem = cart.find((item) => item.id === product.id);
+		if (existingItem) {
+			setCart(
+				cart.map((item) =>
+					item.id === product.id
+						? { ...item, quantity: item.quantity + 1 }
+						: item
+				)
+			);
+		} else {
+			setCart([...cart, { ...product, quantity: 1 }]);
+		}
 	};
 
+	// Функция для уменьшения количества товара
+	const decreaseQuantity = (productId) => {
+		const updatedCart = cart
+			.map((item) =>
+				item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
+			)
+			.filter((item) => item.quantity > 0);
+		setCart(updatedCart);
+	};
+
+	// Функция для удаления товара из корзины
 	const removeFromCart = (productId) => {
-		setCart(prevCart => {
-			const updatedCart = { ...prevCart };
-			if (updatedCart[productId]) {
-				delete updatedCart[productId]
-			}
-			return updatedCart;
-		});
-	};
-
-
-	const updateQuantity = (productId, newQuantity) => {
-		setCart(prevCart => {
-			const updatedCart = { ...prevCart };
-			if (updatedCart[productId]) {
-				updatedCart[productId].quantity = newQuantity;
-			}
-			return updatedCart;
-		});
-	};
-
-	const clearCart = () => {
-		setCart({});
+		setCart(cart.filter((item) => item.id !== productId));
 	};
 
 
 	const getTotalQuantity = () => {
-		return Object.values(cart).reduce((total, item) => total + item.quantity, 0);
+		return cart.reduce((total, item) => total + item.quantity, 0);
 	};
 
 	const getTotalPrice = () => {
-		return Object.values(cart).reduce((total, item) => total + (item.price * item.quantity), 0);
+		return cart.reduce((total, item) => total + item.price * item.quantity, 0);
 	};
 
-	const cartValue = {
-		cart,
-		addToCart,
-		removeFromCart,
-		updateQuantity,
-		clearCart,
-		getTotalQuantity,
-		getTotalPrice
-	};
-
+	// Возвращаем провайдер с состоянием корзины и функциями
 	return (
-		<CartContext.Provider value={cartValue}>
+		<CartContext.Provider
+			value={{
+				cart,
+				addToCart,
+				decreaseQuantity,
+				removeFromCart,
+				getTotalQuantity,
+				getTotalPrice,
+			}}
+		>
 			{children}
 		</CartContext.Provider>
 	);
